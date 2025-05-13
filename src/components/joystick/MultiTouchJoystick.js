@@ -1,130 +1,130 @@
 // src/components/joystick/MultiTouchJoystick.js
-import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, TouchableWithoutFeedback } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, Animated, PanResponder } from 'react-native';
 
 const MultiTouchJoystick = ({ id, label, onMove }) => {
-  const [active, setActive] = useState(false);
   const [values, setValues] = useState({ x: 0, y: 0 });
+  const [active, setActive] = useState(false);
   const position = useRef(new Animated.ValueXY()).current;
   const joystickRef = useRef(null);
-  const baseLayout = useRef({ x: 0, y: 0, width: 0, height: 0 }).current;
+  const [layout, setLayout] = useState({ x: 0, y: 0, width: 0, height: 0 });
   
   // Size calculations
   const size = 150;
   const stickSize = 60;
   const maxDistance = (size - stickSize) / 2;
   
-  // Determine label and values text based on which joystick this is
+  // Create pan responder with proper multitouch support
+  const panResponder = useRef(
+    PanResponder.create({
+      // Critical for multitouch - don't take over all touches
+      onStartShouldSetPanResponderCapture: () => false,
+      onMoveShouldSetPanResponderCapture: () => false,
+      
+      // This is important - we only want to handle our specific touch
+      onStartShouldSetPanResponder: (evt) => {
+        // Check if touch is inside our joystick area
+        const touch = evt.nativeEvent.touches[0];
+        const centerX = layout.x + layout.width / 2;
+        const centerY = layout.y + layout.height / 2;
+        
+        const distance = Math.sqrt(
+          Math.pow(touch.pageX - centerX, 2) + 
+          Math.pow(touch.pageY - centerY, 2)
+        );
+        
+        return distance <= layout.width / 2;
+      },
+      
+      onMoveShouldSetPanResponder: () => active,
+      
+      onPanResponderGrant: () => {
+        setActive(true);
+        position.setValue({ x: 0, y: 0 });
+      },
+      
+      onPanResponderMove: (evt, gestureState) => {
+        let x = gestureState.dx;
+        let y = gestureState.dy;
+        
+        // Calculate distance from center
+        const distance = Math.sqrt(x * x + y * y);
+        
+        // Limit to circle boundary
+        if (distance > maxDistance) {
+          const angle = Math.atan2(y, x);
+          x = Math.cos(angle) * maxDistance;
+          y = Math.sin(angle) * maxDistance;
+        }
+        
+        // Update animated values
+        position.setValue({ x, y });
+        
+        // Normalize values to -1...1 range for controller input
+        const normalizedX = x / maxDistance;
+        const normalizedY = -y / maxDistance; // Invert Y
+        
+        setValues({
+          x: Math.round(normalizedX * 100),
+          y: Math.round(normalizedY * 100)
+        });
+        
+        if (onMove) {
+          onMove({
+            x: normalizedX,
+            y: normalizedY
+          });
+        }
+      },
+      
+      onPanResponderRelease: () => {
+        setActive(false);
+        Animated.spring(position, {
+          toValue: { x: 0, y: 0 },
+          useNativeDriver: false,
+          friction: 5,
+          tension: 40
+        }).start();
+        
+        setValues({ x: 0, y: 0 });
+        
+        if (onMove) {
+          onMove({ x: 0, y: 0 });
+        }
+      },
+      
+      // IMPORTANT: Allow simultaneous responders
+      onPanResponderTerminationRequest: () => false,
+    })
+  ).current;
+
+  // Update layout measurements
+  useEffect(() => {
+    // Measure function needs a small delay to get accurate values
+    const timeoutId = setTimeout(() => {
+      if (joystickRef.current) {
+        joystickRef.current.measure((x, y, width, height, pageX, pageY) => {
+          setLayout({
+            x: pageX,
+            y: pageY,
+            width,
+            height
+          });
+        });
+      }
+    }, 100);
+    
+    return () => clearTimeout(timeoutId);
+  }, []);
+
+  // Determine label and values text
   const valueLabels = label?.includes('Throttle') 
     ? { x: 'Yaw', y: 'Throttle' }
     : { x: 'Roll', y: 'Pitch' };
 
-  const handleLayout = (event) => {
-    joystickRef.current.measure((x, y, width, height, pageX, pageY) => {
-      baseLayout.x = pageX;
-      baseLayout.y = pageY;
-      baseLayout.width = width;
-      baseLayout.height = height;
-    });
-  };
-
-  const handleResponderStart = (event) => {
-    const touch = event.nativeEvent.touches.find(t => 
-      isPointInsideJoystick(t.pageX, t.pageY)
-    );
-    
-    if (touch) {
-      setActive(true);
-      handleMove(touch);
-    }
-  };
-  
-  const isPointInsideJoystick = (x, y) => {
-    const centerX = baseLayout.x + (baseLayout.width / 2);
-    const centerY = baseLayout.y + (baseLayout.height / 2);
-    const distance = Math.sqrt(
-      Math.pow(x - centerX, 2) + 
-      Math.pow(y - centerY, 2)
-    );
-    return distance <= baseLayout.width / 2;
-  };
-  
-  const handleMove = (touch) => {
-    const centerX = baseLayout.x + (baseLayout.width / 2);
-    const centerY = baseLayout.y + (baseLayout.height / 2);
-    
-    let dx = touch.pageX - centerX;
-    let dy = touch.pageY - centerY;
-    
-    // Calculate distance from center
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    
-    // Limit to circle boundary
-    if (distance > maxDistance) {
-      const angle = Math.atan2(dy, dx);
-      dx = Math.cos(angle) * maxDistance;
-      dy = Math.sin(angle) * maxDistance;
-    }
-    
-    // Update values
-    position.setValue({ x: dx, y: dy });
-    
-    // Normalize and send to parent
-    const normalizedX = dx / maxDistance;
-    const normalizedY = -dy / maxDistance; // Invert Y
-    
-    setValues({
-      x: Math.round(normalizedX * 100),
-      y: Math.round(normalizedY * 100)
-    });
-    
-    if (onMove) {
-      onMove({
-        x: normalizedX,
-        y: normalizedY
-      });
-    }
-  };
-  
-  const handleResponderMove = (event) => {
-    if (!active) return;
-    
-    // Find our touch among all current touches
-    const touch = event.nativeEvent.touches.find(t => 
-      isPointInsideJoystick(t.pageX, t.pageY) || 
-      (active && t.identifier === activeTouch.current)
-    );
-    
-    if (touch) {
-      handleMove(touch);
-    } else {
-      handleResponderEnd();
-    }
-  };
-  
-  const handleResponderEnd = () => {
-    if (!active) return;
-    
-    setActive(false);
-    Animated.spring(position, {
-      toValue: { x: 0, y: 0 },
-      useNativeDriver: false,
-      friction: 5,
-      tension: 40
-    }).start();
-    
-    setValues({ x: 0, y: 0 });
-    if (onMove) {
-      onMove({ x: 0, y: 0 });
-    }
-    
-    activeTouch.current = null;
-  };
-
   return (
     <View 
-      style={styles.joystickSection}
-      onLayout={handleLayout}
+      style={styles.joystickSection} 
       collapsable={false}
     >
       {label && <Text style={styles.joystickLabel}>{label}</Text>}
@@ -135,12 +135,7 @@ const MultiTouchJoystick = ({ id, label, onMove }) => {
           styles.joystickWrapper,
           { width: size, height: size }
         ]}
-        onStartShouldSetResponder={() => true}
-        onMoveShouldSetResponder={() => true}
-        onResponderGrant={handleResponderStart}
-        onResponderMove={handleResponderMove}
-        onResponderRelease={handleResponderEnd}
-        onResponderTerminate={handleResponderEnd}
+        {...panResponder.panHandlers}
       >
         <View 
           style={[

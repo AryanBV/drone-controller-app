@@ -1,3 +1,4 @@
+// src/services/DroneService.js
 import dgram from 'react-native-udp';
 import StorageService from './StorageService';
 
@@ -26,37 +27,72 @@ const DroneService = {
       }
     }
     
-    // Create UDP socket
+    // Create UDP socket with error handling
     return new Promise((resolve, reject) => {
       try {
-        socket = dgram.createSocket('udp4');
+        // Make sure any previous socket is fully closed
+        if (socket) {
+          socket.close();
+          socket = null;
+        }
         
+        // Create new socket
+        socket = dgram.createSocket({
+          type: 'udp4',
+          reusePort: true  // Add this to fix the clientNotFound issue
+        });
+        
+        // Handle socket errors
         socket.once('error', (err) => {
           console.error('Socket error:', err);
           connected = false;
+          socket = null;
           reject(err);
         });
         
-        socket.bind(0, '0.0.0.0', () => {
-          console.log('UDP socket bound');
-          connected = true;
-          
-          // Send a ping to test connection
-          const pingMessage = JSON.stringify({ type: 'ping' });
-          socket.send(pingMessage, 0, pingMessage.length, port, ipAddress, (err) => {
-            if (err) {
-              console.error('Failed to send ping:', err);
-              connected = false;
-              reject(err);
-            } else {
-              console.log('Connected to drone at', ipAddress + ':' + port);
-              resolve(true);
+        // Properly bind socket with a 1-second timeout
+        const bindTimeout = setTimeout(() => {
+          if (!connected) {
+            console.error('Socket bind timeout');
+            if (socket) {
+              socket.close();
+              socket = null;
             }
-          });
+            reject(new Error('Socket bind timeout'));
+          }
+        }, 3000);
+        
+        socket.bind(0, () => {
+          clearTimeout(bindTimeout);
+          console.log('UDP socket bound successfully');
+          
+          // Send a ping to test connection - with timeout
+          const pingMessage = JSON.stringify({ type: 'ping' });
+          try {
+            socket.send(pingMessage, 0, pingMessage.length, port, ipAddress, (err) => {
+              if (err) {
+                console.error('Failed to send ping:', err);
+                connected = false;
+                reject(err);
+              } else {
+                console.log('Connected to drone at', ipAddress + ':' + port);
+                connected = true;
+                resolve(true);
+              }
+            });
+          } catch (sendError) {
+            console.error('Error sending ping message:', sendError);
+            connected = false;
+            reject(sendError);
+          }
         });
       } catch (error) {
         console.error('Failed to create socket:', error);
         connected = false;
+        if (socket) {
+          socket.close();
+          socket = null;
+        }
         reject(error);
       }
     });
@@ -66,12 +102,19 @@ const DroneService = {
   disconnect: () => {
     return new Promise((resolve) => {
       if (socket) {
-        socket.close(() => {
-          console.log('Socket closed');
+        try {
+          socket.close(() => {
+            console.log('Socket closed');
+            socket = null;
+            connected = false;
+            resolve(true);
+          });
+        } catch (error) {
+          console.error('Error closing socket:', error);
           socket = null;
           connected = false;
-          resolve(true);
-        });
+          resolve(false);
+        }
       } else {
         connected = false;
         resolve(true);
@@ -81,13 +124,13 @@ const DroneService = {
   
   // Check if connected
   isConnected: () => {
-    return connected;
+    return connected && socket !== null;
   },
   
   // Send command to drone
   sendCommand: (command) => {
     if (!connected || !socket) {
-      console.error('Not connected');
+      console.log('Not connected, cannot send command');
       return false;
     }
     

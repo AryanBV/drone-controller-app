@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import StorageService from '../services/StorageService';
-import DroneService from '../services/DroneService';
+import DroneService from '../services/MockDroneService';
 
 const EnhancedSettingsScreen = ({ navigation }) => {
   const [ipAddress, setIpAddress] = useState('192.168.4.1');

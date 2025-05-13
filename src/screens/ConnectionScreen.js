@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import DroneService from '../services/DroneService';
+import DroneService from '../services/MockDroneService';
 import StorageService from '../services/StorageService';
 import { isValidIP, isValidPort } from '../utils/helpers';
 
