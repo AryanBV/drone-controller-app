@@ -1,84 +1,133 @@
-import React, { useRef, useState } from 'react';
-import { View, StyleSheet, PanResponder, Animated } from 'react-native';
+// src/components/joystick/JoystickControl.js
+import React, { useState, useRef } from 'react';
+import { View, StyleSheet, Animated } from 'react-native';
+import { PanGestureHandler, State } from 'react-native-gesture-handler';
 
-const JoystickControl = ({ onMove }) => {
+const JoystickControl = ({ label, onMove }) => {
+  const [active, setActive] = useState(false);
+  const [values, setValues] = useState({ x: 0, y: 0 });
   const pan = useRef(new Animated.ValueXY()).current;
-  const [showActive, setShowActive] = useState(false);
   
   // Size calculations
   const size = 150;
-  const centerPoint = size / 2;
-  const stickSize = size / 3;
-  const maxDistance = centerPoint - stickSize / 2;
+  const stickSize = 60;
+  const maxDistance = (size - stickSize) / 2;
   
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onPanResponderGrant: () => {
-        setShowActive(true);
-        pan.setValue({ x: 0, y: 0 });
+  const onGestureEvent = Animated.event(
+    [
+      {
+        nativeEvent: {
+          translationX: pan.x,
+          translationY: pan.y,
+        },
       },
-      onPanResponderMove: (_, gesture) => {
-        let x = gesture.dx;
-        let y = gesture.dy;
-        
-        // Calculate distance from center
-        const distance = Math.sqrt(x * x + y * y);
-        
-        // Limit to circle boundary
-        if (distance > maxDistance) {
-          const angle = Math.atan2(y, x);
-          x = Math.cos(angle) * maxDistance;
-          y = Math.sin(angle) * maxDistance;
-        }
-        
-        // Update animated values
-        pan.setValue({ x, y });
-        
-        // Normalize values to -1...1 range for controller input
-        if (onMove) {
-          onMove({
-            x: x / maxDistance,
-            y: -y / maxDistance // Invert Y since screen coordinate system is inverted
-          });
-        }
-      },
-      onPanResponderRelease: () => {
-        setShowActive(false);
-        Animated.spring(pan, {
-          toValue: { x: 0, y: 0 },
-          useNativeDriver: false
-        }).start();
-        
-        if (onMove) {
-          onMove({ x: 0, y: 0 });
-        }
+    ],
+    { useNativeDriver: false }
+  );
+
+  const onHandlerStateChange = (event) => {
+    if (event.nativeEvent.oldState === State.ACTIVE) {
+      // End of gesture, reset position
+      setActive(false);
+      Animated.spring(pan, {
+        toValue: { x: 0, y: 0 },
+        useNativeDriver: false,
+        friction: 5,
+        tension: 40
+      }).start();
+      
+      setValues({ x: 0, y: 0 });
+      if (onMove) {
+        onMove({ x: 0, y: 0 });
       }
-    })
-  ).current;
+    } else if (event.nativeEvent.state === State.BEGAN) {
+      // Start of gesture
+      setActive(true);
+    } else if (event.nativeEvent.state === State.ACTIVE) {
+      // During gesture
+      let x = event.nativeEvent.translationX;
+      let y = event.nativeEvent.translationY;
+      
+      // Calculate distance from center
+      const distance = Math.sqrt(x * x + y * y);
+      
+      // Limit to circle boundary
+      if (distance > maxDistance) {
+        const angle = Math.atan2(y, x);
+        x = Math.cos(angle) * maxDistance;
+        y = Math.sin(angle) * maxDistance;
+        
+        // Update animated values manually if beyond bounds
+        pan.setValue({ x, y });
+      }
+      
+      // Normalize values to -1...1 range for controller input
+      const normalizedX = x / maxDistance;
+      const normalizedY = -y / maxDistance; // Invert Y since screen coordinate system is inverted
+      
+      setValues({
+        x: Math.round(normalizedX * 100),
+        y: Math.round(normalizedY * 100)
+      });
+      
+      if (onMove) {
+        onMove({
+          x: normalizedX,
+          y: normalizedY
+        });
+      }
+    }
+  };
+
+  // Determine label and values text based on which joystick this is
+  const valueLabels = label && label.includes('Throttle') 
+    ? { x: 'Yaw', y: 'Throttle' }
+    : { x: 'Roll', y: 'Pitch' };
 
   return (
-    <View style={[styles.container, { width: size, height: size }]}>
-      <View 
-        style={[
-          styles.baseCircle, 
-          { width: size, height: size, borderRadius: size / 2 }
-        ]} 
-      />
-      <Animated.View
-        style={{
-          transform: [{ translateX: pan.x }, { translateY: pan.y }]
-        }}
-        {...panResponder.panHandlers}
-      >
+    <View style={styles.joystickSection}>
+      {label && <Text style={styles.joystickLabel}>{label}</Text>}
+      <View style={styles.joystickWrapper}>
         <View 
           style={[
-            styles.stickCircle,
-            showActive ? styles.stickActive : {},
-            { width: stickSize, height: stickSize, borderRadius: stickSize / 2 }
+            styles.joystickBase, 
+            { width: size, height: size, borderRadius: size / 2 }
           ]} 
-        />
-      </Animated.View>
+        >
+          <View style={styles.joystickGuides}>
+            <View style={styles.horizontalLine} />
+            <View style={styles.verticalLine} />
+          </View>
+        </View>
+        
+        <PanGestureHandler
+          onGestureEvent={onGestureEvent}
+          onHandlerStateChange={onHandlerStateChange}
+        >
+          <Animated.View
+            style={[
+              styles.stickPosition,
+              {
+                transform: [
+                  { translateX: pan.x },
+                  { translateY: pan.y }
+                ]
+              }
+            ]}
+          >
+            <View 
+              style={[
+                styles.stick,
+                active ? styles.stickActive : {},
+                { width: stickSize, height: stickSize, borderRadius: stickSize / 2 }
+              ]} 
+            />
+          </Animated.View>
+        </PanGestureHandler>
+      </View>
+      <Text style={styles.joystickValues}>
+        {valueLabels.y}: {values.y}, {valueLabels.x}: {values.x}
+      </Text>
     </View>
   );
 };

@@ -1,22 +1,38 @@
+// App.js
 import React from 'react';
+import { StatusBar } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-import ControlScreen from './src/screens/ControlScreen';
-import SettingsScreen from './src/screens/SettingsScreen';
-import ConnectionScreen from './src/screens/ConnectionScreen';
+// Import our enhanced screens
+import EnhancedControlScreen from './src/screens/ControlScreen';
+import EnhancedSettingsScreen from './src/screens/SettingsScreen';
+import EnhancedConnectionScreen from './src/screens/ConnectionScreen';
 
 const Stack = createStackNavigator();
 
 const App = () => {
   return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="Control">
-        <Stack.Screen name="Control" component={ControlScreen} options={{ title: 'Drone Controller' }} />
-        <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
-        <Stack.Screen name="Connection" component={ConnectionScreen} options={{ title: 'Connection' }} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <StatusBar barStyle="light-content" backgroundColor="#121212" />
+        <NavigationContainer>
+          <Stack.Navigator
+            initialRouteName="Control"
+            screenOptions={{
+              headerShown: false,
+              cardStyle: { backgroundColor: '#121212' }
+            }}
+          >
+            <Stack.Screen name="Control" component={EnhancedControlScreen} />
+            <Stack.Screen name="Settings" component={EnhancedSettingsScreen} />
+            <Stack.Screen name="Connection" component={EnhancedConnectionScreen} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 };
 

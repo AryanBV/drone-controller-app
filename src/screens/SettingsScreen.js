@@ -1,33 +1,53 @@
+// src/screens/SettingsScreen.js
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  StatusBar,
+  Alert,
+  Switch
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import StorageService from '../services/StorageService';
+import DroneService from '../services/DroneService';
 
-const SettingsScreen = () => {
+const EnhancedSettingsScreen = ({ navigation }) => {
   const [ipAddress, setIpAddress] = useState('192.168.4.1');
   const [port, setPort] = useState('8888');
   const [pGain, setPGain] = useState('1.0');
   const [iGain, setIGain] = useState('0.0');
   const [dGain, setDGain] = useState('0.0');
+  const [autoConnect, setAutoConnect] = useState(false);
+  const [changed, setChanged] = useState(false);
+  const [advanced, setAdvanced] = useState(false);
 
   // Load settings on component mount
   useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        const settings = await StorageService.getSettings();
-        if (settings) {
-          setIpAddress(settings.ipAddress || '192.168.4.1');
-          setPort(settings.port || '8888');
-          setPGain(settings.pGain || '1.0');
-          setIGain(settings.iGain || '0.0');
-          setDGain(settings.dGain || '0.0');
-        }
-      } catch (error) {
-        console.error('Failed to load settings:', error);
-      }
-    };
-
     loadSettings();
   }, []);
+
+  const loadSettings = async () => {
+    try {
+      const settings = await StorageService.getSettings();
+      if (settings) {
+        setIpAddress(settings.ipAddress || '192.168.4.1');
+        setPort(settings.port || '8888');
+        setPGain(settings.pGain || '1.0');
+        setIGain(settings.iGain || '0.0');
+        setDGain(settings.dGain || '0.0');
+        setAutoConnect(settings.autoConnect || false);
+      }
+      setChanged(false);
+    } catch (error) {
+      console.error('Failed to load settings:', error);
+      Alert.alert('Error', 'Failed to load settings.');
+    }
+  };
 
   // Save settings
   const saveSettings = async () => {
@@ -38,124 +58,371 @@ const SettingsScreen = () => {
         pGain,
         iGain,
         dGain,
+        autoConnect
       });
-      alert('Settings saved successfully!');
+      
+      // If connected, update PID parameters on the drone
+      if (DroneService.isConnected()) {
+        await DroneService.sendPIDParameters();
+      }
+      
+      Alert.alert('Success', 'Settings saved successfully!');
+      setChanged(false);
     } catch (error) {
       console.error('Failed to save settings:', error);
-      alert('Failed to save settings');
+      Alert.alert('Error', 'Failed to save settings.');
     }
   };
 
+  // Reset settings to defaults
+  const resetToDefaults = () => {
+    Alert.alert(
+      'Reset Settings',
+      'Are you sure you want to reset all settings to defaults?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset',
+          style: 'destructive',
+          onPress: () => {
+            setIpAddress('192.168.4.1');
+            setPort('8888');
+            setPGain('1.0');
+            setIGain('0.0');
+            setDGain('0.0');
+            setAutoConnect(false);
+            setChanged(true);
+          }
+        }
+      ]
+    );
+  };
+
+  // Handle value changes and set changed flag
+  const handleChange = (setter, value) => {
+    setter(value);
+    setChanged(true);
+  };
+
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Connection Settings</Text>
-        
-        <Text style={styles.label}>ESP32 IP Address</Text>
-        <TextInput
-          style={styles.input}
-          value={ipAddress}
-          onChangeText={setIpAddress}
-          placeholder="192.168.4.1"
-          keyboardType="default"
-        />
-        
-        <Text style={styles.label}>UDP Port</Text>
-        <TextInput
-          style={styles.input}
-          value={port}
-          onChangeText={setPort}
-          placeholder="8888"
-          keyboardType="numeric"
-        />
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="light-content" backgroundColor="#121212" />
+      
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Settings</Text>
       </View>
       
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>PID Controller Settings</Text>
+      <ScrollView style={styles.container}>
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Connection Settings</Text>
+          
+          <Text style={styles.inputLabel}>ESP32 IP Address</Text>
+          <View style={styles.inputContainer}>
+            <MaterialIcons name="wifi" size={20} color="#BBBBBB" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              value={ipAddress}
+              onChangeText={(value) => handleChange(setIpAddress, value)}
+              placeholder="192.168.4.1"
+              placeholderTextColor="#666666"
+              keyboardType="default"
+            />
+          </View>
+          
+          <Text style={styles.inputLabel}>UDP Port</Text>
+          <View style={styles.inputContainer}>
+            <MaterialIcons name="settings-ethernet" size={20} color="#BBBBBB" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              value={port}
+              onChangeText={(value) => handleChange(setPort, value)}
+              placeholder="8888"
+              placeholderTextColor="#666666"
+              keyboardType="numeric"
+            />
+          </View>
+          
+          <View style={styles.switchRow}>
+            <MaterialIcons name="repeat" size={20} color="#BBBBBB" />
+            <Text style={styles.switchLabel}>Auto-connect on startup</Text>
+            <Switch
+              value={autoConnect}
+              onValueChange={(value) => handleChange(setAutoConnect, value)}
+              trackColor={{ false: '#333', true: '#2196F3' }}
+              thumbColor={autoConnect ? '#FFFFFF' : '#BBBBBB'}
+            />
+          </View>
+        </View>
         
-        <Text style={styles.label}>P Gain</Text>
-        <TextInput
-          style={styles.input}
-          value={pGain}
-          onChangeText={setPGain}
-          placeholder="1.0"
-          keyboardType="numeric"
-        />
+        <TouchableOpacity 
+          style={styles.collapseButton}
+          onPress={() => setAdvanced(!advanced)}
+        >
+          <Text style={styles.collapseButtonText}>
+            {advanced ? 'Hide Advanced Settings' : 'Show Advanced Settings'}
+          </Text>
+          <MaterialIcons 
+            name={advanced ? 'expand-less' : 'expand-more'} 
+            size={24} 
+            color="#2196F3" 
+          />
+        </TouchableOpacity>
         
-        <Text style={styles.label}>I Gain</Text>
-        <TextInput
-          style={styles.input}
-          value={iGain}
-          onChangeText={setIGain}
-          placeholder="0.0"
-          keyboardType="numeric"
-        />
+        {advanced && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>PID Controller Settings</Text>
+            
+            <View style={styles.pidContainer}>
+              <View style={styles.pidValueContainer}>
+                <Text style={styles.inputLabel}>P Gain</Text>
+                <View style={styles.inputContainer}>
+                  <MaterialIcons name="tune" size={20} color="#BBBBBB" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    value={pGain}
+                    onChangeText={(value) => handleChange(setPGain, value)}
+                    placeholder="1.0"
+                    placeholderTextColor="#666666"
+                    keyboardType="numeric"
+                  />
+                </View>
+                <Text style={styles.pidDescription}>Proportional control</Text>
+              </View>
+              
+              <View style={styles.pidValueContainer}>
+                <Text style={styles.inputLabel}>I Gain</Text>
+                <View style={styles.inputContainer}>
+                  <MaterialIcons name="tune" size={20} color="#BBBBBB" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    value={iGain}
+                    onChangeText={(value) => handleChange(setIGain, value)}
+                    placeholder="0.0"
+                    placeholderTextColor="#666666"
+                    keyboardType="numeric"
+                  />
+                </View>
+                <Text style={styles.pidDescription}>Integral control</Text>
+              </View>
+              
+              <View style={styles.pidValueContainer}>
+                <Text style={styles.inputLabel}>D Gain</Text>
+                <View style={styles.inputContainer}>
+                  <MaterialIcons name="tune" size={20} color="#BBBBBB" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    value={dGain}
+                    onChangeText={(value) => handleChange(setDGain, value)}
+                    placeholder="0.0"
+                    placeholderTextColor="#666666"
+                    keyboardType="numeric"
+                  />
+                </View>
+                <Text style={styles.pidDescription}>Derivative control</Text>
+              </View>
+            </View>
+            
+            <View style={styles.warningContainer}>
+              <MaterialIcons name="warning" size={20} color="#FFC107" />
+              <Text style={styles.warningText}>
+                Caution: Adjusting PID settings incorrectly may cause unstable flight behavior.
+              </Text>
+            </View>
+          </View>
+        )}
         
-        <Text style={styles.label}>D Gain</Text>
-        <TextInput
-          style={styles.input}
-          value={dGain}
-          onChangeText={setDGain}
-          placeholder="0.0"
-          keyboardType="numeric"
-        />
-      </View>
-      
-      <TouchableOpacity style={styles.saveButton} onPress={saveSettings}>
-        <Text style={styles.saveButtonText}>Save Settings</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity 
+            style={[styles.button, styles.saveButton, !changed && styles.disabledButton]}
+            onPress={saveSettings}
+            disabled={!changed}
+          >
+            <MaterialIcons name="save" size={20} color="white" />
+            <Text style={styles.buttonText}>Save Settings</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.button, styles.resetButton]}
+            onPress={resetToDefaults}
+          >
+            <MaterialIcons name="refresh" size={20} color="white" />
+            <Text style={styles.buttonText}>Reset to Defaults</Text>
+          </TouchableOpacity>
+        </View>
+        
+        <View style={styles.infoCard}>
+          <MaterialIcons name="info-outline" size={20} color="#BBBBBB" />
+          <Text style={styles.infoText}>
+            Settings will be automatically applied after saving. Some settings require reconnecting to the drone.
+          </Text>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#121212',
+  },
+  header: {
+    height: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'white',
+  },
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
     padding: 16,
   },
-  section: {
-    backgroundColor: 'white',
-    borderRadius: 8,
+  card: {
+    backgroundColor: '#1E1E1E',
+    borderRadius: 10,
     padding: 16,
     marginBottom: 16,
+    elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
-  sectionTitle: {
+  cardTitle: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: 'white',
     marginBottom: 16,
-    color: '#333',
   },
-  label: {
+  inputLabel: {
     fontSize: 14,
+    color: '#BBBBBB',
     marginBottom: 8,
-    color: '#555',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#2A2A2A',
+    borderRadius: 8,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  inputIcon: {
+    paddingHorizontal: 12,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 4,
-    padding: 8,
-    marginBottom: 16,
+    flex: 1,
+    color: 'white',
     fontSize: 16,
+    paddingVertical: 12,
+    paddingRight: 12,
+  },
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    paddingVertical: 8,
+  },
+  switchLabel: {
+    flex: 1,
+    marginLeft: 10,
+    fontSize: 14,
+    color: '#BBBBBB',
+  },
+  collapseButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    marginBottom: 16,
+  },
+  collapseButtonText: {
+    color: '#2196F3',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginRight: 4,
+  },
+  pidContainer: {
+    marginBottom: 10,
+  },
+  pidValueContainer: {
+    marginBottom: 16,
+  },
+  pidDescription: {
+    fontSize: 12,
+    color: '#888888',
+    marginTop: 4,
+  },
+  warningContainer: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255, 193, 7, 0.1)',
+    borderRadius: 8,
+    padding: 10,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  warningText: {
+    color: '#FFC107',
+    marginLeft: 10,
+    flex: 1,
+    fontSize: 12,
+  },
+  buttonContainer: {
+    marginBottom: 24,
+  },
+  button: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: 10,
+    marginBottom: 12,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
   saveButton: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 30,
+    backgroundColor: '#2196F3',
   },
-  saveButtonText: {
+  resetButton: {
+    backgroundColor: '#757575',
+  },
+  disabledButton: {
+    backgroundColor: '#444444',
+    opacity: 0.7,
+  },
+  buttonText: {
     color: 'white',
     fontWeight: 'bold',
     fontSize: 16,
+    marginLeft: 8,
+  },
+  infoCard: {
+    flexDirection: 'row',
+    backgroundColor: '#1E1E1E',
+    borderRadius: 10,
+    padding: 16,
+    alignItems: 'center',
+    marginBottom: 24,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  infoText: {
+    color: '#BBBBBB',
+    marginLeft: 10,
+    flex: 1,
   },
 });
 
-export default SettingsScreen;
+export default EnhancedSettingsScreen;
