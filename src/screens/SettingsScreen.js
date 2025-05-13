@@ -23,8 +23,10 @@ const EnhancedSettingsScreen = ({ navigation }) => {
   const [iGain, setIGain] = useState('0.0');
   const [dGain, setDGain] = useState('0.0');
   const [autoConnect, setAutoConnect] = useState(false);
+  const [hapticFeedback, setHapticFeedback] = useState(true); // New state for haptic feedback
   const [changed, setChanged] = useState(false);
   const [advanced, setAdvanced] = useState(false);
+  const [interfaceSettings, setInterfaceSettings] = useState(false); // Toggle for interface settings section
 
   // Load settings on component mount
   useEffect(() => {
@@ -41,6 +43,7 @@ const EnhancedSettingsScreen = ({ navigation }) => {
         setIGain(settings.iGain || '0.0');
         setDGain(settings.dGain || '0.0');
         setAutoConnect(settings.autoConnect || false);
+        setHapticFeedback(settings.hapticFeedback !== false); // Default to true if undefined
       }
       setChanged(false);
     } catch (error) {
@@ -58,7 +61,8 @@ const EnhancedSettingsScreen = ({ navigation }) => {
         pGain,
         iGain,
         dGain,
-        autoConnect
+        autoConnect,
+        hapticFeedback // Add haptic feedback to saved settings
       });
       
       // If connected, update PID parameters on the drone
@@ -91,6 +95,7 @@ const EnhancedSettingsScreen = ({ navigation }) => {
             setIGain('0.0');
             setDGain('0.0');
             setAutoConnect(false);
+            setHapticFeedback(true); // Reset haptic feedback to default (enabled)
             setChanged(true);
           }
         }
@@ -154,6 +159,42 @@ const EnhancedSettingsScreen = ({ navigation }) => {
           </View>
         </View>
         
+        {/* Interface Settings Section */}
+        <TouchableOpacity 
+          style={styles.collapseButton}
+          onPress={() => setInterfaceSettings(!interfaceSettings)}
+        >
+          <Text style={styles.collapseButtonText}>
+            {interfaceSettings ? 'Hide Interface Settings' : 'Show Interface Settings'}
+          </Text>
+          <MaterialIcons 
+            name={interfaceSettings ? 'expand-less' : 'expand-more'} 
+            size={24} 
+            color="#2196F3" 
+          />
+        </TouchableOpacity>
+        
+        {interfaceSettings && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Interface Settings</Text>
+            
+            <View style={styles.switchRow}>
+              <MaterialIcons name="vibration" size={20} color="#BBBBBB" />
+              <Text style={styles.switchLabel}>Haptic Feedback</Text>
+              <Switch
+                value={hapticFeedback}
+                onValueChange={(value) => handleChange(setHapticFeedback, value)}
+                trackColor={{ false: '#333', true: '#2196F3' }}
+                thumbColor={hapticFeedback ? '#FFFFFF' : '#BBBBBB'}
+              />
+            </View>
+            <Text style={styles.settingDescription}>
+              Enable vibration when using joystick controls
+            </Text>
+          </View>
+        )}
+        
+        {/* Advanced Settings Section */}
         <TouchableOpacity 
           style={styles.collapseButton}
           onPress={() => setAdvanced(!advanced)}
@@ -334,6 +375,13 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     fontSize: 14,
     color: '#BBBBBB',
+  },
+  settingDescription: {
+    fontSize: 12,
+    color: '#888888',
+    marginLeft: 30,
+    marginTop: 4,
+    marginBottom: 8,
   },
   collapseButton: {
     flexDirection: 'row',
