@@ -1,97 +1,177 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# ESP32 WiFi Drone Controller
 
-# Getting Started
+A mobile application built with React Native to control an ESP32-based quadcopter drone via WiFi. This app provides real-time control through virtual joysticks and manages drone connectivity, settings, and telemetry.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+![Drone Controller App Screenshot](screenshots/app-screenshot.png)
 
-## Step 1: Start Metro
+## Features
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+- **Dual Joystick Interface**
+  - Left joystick: Throttle (up/down) and Yaw (left/right)
+  - Right joystick: Pitch (forward/backward) and Roll (left/right)
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+- **Wireless Connectivity**
+  - Connect to ESP32 drone via WiFi
+  - UDP communication for low-latency control
+  - Connection status monitoring
 
-```sh
-# Using npm
-npm start
+- **Telemetry Display**
+  - Battery level indicator
+  - Connection status
+  - Real-time flight data
 
-# OR using Yarn
-yarn start
+- **Configuration Options**
+  - PID controller parameter adjustments
+  - WiFi connection settings
+  - Control sensitivity customization
+
+## Technology Stack
+
+- **Frontend**: React Native
+- **State Management**: React Hooks
+- **Navigation**: React Navigation
+- **Storage**: AsyncStorage
+- **Communication**: React Native UDP
+- **UI Components**: Custom components with React Native Animated
+
+## Prerequisites
+
+- Node.js (v14 or higher)
+- JDK 17
+- Android Studio
+- Android SDK (API level 33 recommended)
+- A physical Android device or emulator
+- ESP32 hardware running compatible firmware (for full functionality)
+
+## Installation
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/yourusername/drone-controller-app.git
+cd drone-controller-app
 ```
 
-## Step 2: Build and run your app
+### 2. Install Dependencies
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
-
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
+```bash
+npm install
 ```
 
-### iOS
+### 3. Start Metro Bundler
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
+```bash
+npx react-native start
 ```
 
-Then, and every time you update your native dependencies, run:
+### 4. Run the App
 
-```sh
-bundle exec pod install
+In a new terminal window:
+
+```bash
+npx react-native run-android
 ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+## Project Structure
 
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
+```
+drone-controller-app/
+├── android/                # Android native code
+├── ios/                    # iOS native code (if applicable)
+├── src/                    # Source files
+│   ├── components/         # Reusable UI components
+│   │   ├── joystick/       # Joystick control components
+│   │   ├── status/         # Status indicators
+│   │   └── connection/     # Connection management UI
+│   ├── screens/            # App screens
+│   │   ├── ControlScreen.js      # Main control interface
+│   │   ├── SettingsScreen.js     # App settings
+│   │   └── ConnectionScreen.js   # Connection management
+│   ├── services/           # Business logic
+│   │   ├── DroneService.js      # Drone communication
+│   │   └── StorageService.js    # Local storage management
+│   └── utils/              # Utility functions
+├── App.js                  # App entry point
+└── index.js                # React Native entry point
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+## Usage
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+### Connecting to the Drone
 
-## Step 3: Modify your app
+1. Power on your ESP32 drone
+2. Navigate to the "Connection" screen in the app
+3. Enter the IP address of your ESP32 (default: 192.168.4.1)
+4. Enter the UDP port (default: 8888)
+5. Tap "Connect"
+6. The status indicator will turn green when connected
 
-Now that you have successfully run the app, let's make changes!
+### Controlling the Drone
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+- **Left Joystick**:
+  - Vertical axis: Throttle (up increases altitude, down decreases)
+  - Horizontal axis: Yaw (left rotates counterclockwise, right rotates clockwise)
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+- **Right Joystick**:
+  - Vertical axis: Pitch (up moves forward, down moves backward)
+  - Horizontal axis: Roll (left banks left, right banks right)
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+### Adjusting Settings
 
-## Congratulations! :tada:
+Navigate to the "Settings" screen to:
+- Adjust PID controller parameters (P, I, D gains)
+- Configure connection settings
+- Customize control sensitivity
 
-You've successfully run and modified your React Native App. :partying_face:
+## ESP32 Hardware Integration
 
-### Now what?
+This app is designed to work with an ESP32-based drone that:
+- Creates a WiFi access point or connects to a local network
+- Listens for UDP commands on a specified port
+- Interprets JSON commands with throttle, yaw, pitch, and roll values
+- Optionally sends telemetry data back to the app
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+For complete hardware integration, refer to the firmware repository: [ESP32-Drone-Firmware](https://github.com/yourusername/esp32-drone-firmware)
 
-# Troubleshooting
+## Planned Features
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+- [ ] Flight data logging and export
+- [ ] Autonomous flight modes
+- [ ] Waypoint navigation
+- [ ] Geofencing capabilities
+- [ ] Camera feed display (if drone has camera)
+- [ ] Voice commands
 
-# Learn More
+## Troubleshooting
 
-To learn more about React Native, take a look at the following resources:
+### Connection Issues
+- Ensure your phone is connected to the same WiFi network as the ESP32
+- Check that the correct IP address and port are configured
+- Verify that no firewall is blocking UDP communication
 
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+### App Crashes
+- Check Metro logs for JavaScript errors
+- Ensure all dependencies are correctly installed
+- Verify Android SDK and JDK versions are compatible
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- React Native community for the excellent framework
+- ESP32 community for firmware development resources
+- All contributors who have helped shape this project
+
+---
+
+*This project is part of a broader DIY drone development initiative aimed at making drone technology more accessible to hobbyists and students.*
