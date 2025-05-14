@@ -1,58 +1,116 @@
-# ESP32 WiFi Drone Controller
+# ESP32 WiFi-Controlled Drone
 
-A mobile application built with React Native to control an ESP32-based quadcopter drone via WiFi. This app provides real-time control through virtual joysticks with haptic feedback and manages drone connectivity, settings, and telemetry.
+A cross-platform mobile application built with React Native to control an ESP32-based quadcopter drone via WiFi. This app provides real-time control through advanced virtual joysticks with haptic feedback and comprehensive drone management capabilities including telemetry visualization, PID tuning, and flight logging.
 
 ![Drone Controller App](screenshots/app-screenshot.png)
 
-## Features
+## Project Status
 
-- **Advanced Dual Joystick Interface**
+- ✅ Development environment configured
+- ✅ React Native project structure established
+- ✅ Main application screens created
+- ✅ Advanced dual joystick control with multitouch support implemented
+- ✅ Haptic feedback for joystick controls with user toggle option
+- ✅ Connection status synchronization across screens
+- ✅ Mock drone service for testing without hardware
+- ✅ Responsive UI for both portrait and landscape orientations
+- ✅ Basic UI components fully functional
+- ✅ Settings storage and management system
+- ✅ Application successfully running on Android devices
+- ✅ Intelligent orientation handling with automatic layout adjustment
+- ✅ Optimized landscape interface for active flight control
+- ✅ Comprehensive telemetry visualization system
+- ✅ Flight logging system with historical data review
+- ✅ PID controller tuning interface
+- ✅ Emergency stop functionality
+- ✅ Battery monitoring with configurable alerts
+
+## Key Features
+
+### Advanced Control Interface
+- **Dual Joystick Control System**
   - Left joystick: Throttle (up/down) and Yaw (left/right)
   - Right joystick: Pitch (forward/backward) and Roll (left/right)
-  - Supports true simultaneous multi-touch operation
-  - Haptic feedback with customizable settings
+  - True simultaneous multitouch operation
+  - Tactile haptic feedback with customizable settings
 
-- **Responsive UI Design**
-  - Sleek dark theme designed for outdoor visibility
-  - Visual feedback for joystick movements
-  - Supports both portrait and landscape orientations
-  - Dynamic layouts that adapt to screen size and orientation
+- **Orientation-Optimized UI**
+  - Portrait Mode: Full access to all settings and features
+  - Landscape Mode: Flight-focused interface with maximized control space
+  - Automatic detection and smooth transition between orientations
+  - Persistent critical controls (emergency stop) in all modes
 
-- **Wireless Connectivity**
-  - Connect to ESP32 drone via WiFi
-  - UDP communication for low-latency control
-  - Connection status monitoring that syncs across screens
-  - Automatic status updates when switching screens
+- **Comprehensive Flight Status**
+  - Real-time connection status monitoring
+  - Visual feedback for all control inputs
+  - Battery level with alert thresholds
+  - Critical notifications with haptic feedback
 
-- **Telemetry Display**
-  - Battery level indicator with color coding
-  - Connection status with visual feedback
-  - Real-time flight data
+### Advanced Flight Management
 
-- **Comprehensive Settings**
-  - PID controller parameter adjustments
-  - WiFi connection settings
-  - Interface preferences (haptic feedback toggle)
-  - Control sensitivity customization
-  - Settings are saved persistently
+- **Telemetry Visualization**
+  - Real-time altitude and speed visualization
+  - Battery voltage and percentage monitoring
+  - Visual attitude indicator showing pitch and roll
+  - Temperature monitoring for ESCs and MCU
+  - GPS status tracking with coordinates
+
+- **Flight Logging System**
+  - Complete flight recording functionality
+  - Historical flight data review with statistics
+  - Detailed log view with interactive graphs
+  - Data analysis for multiple flight parameters
+  - Secure local storage for log data
+
+- **PID Controller Tuning**
+  - Interactive parameter adjustment sliders
+  - Real-time visual feedback in tuning mode
+  - Preset configurations for different flight characteristics
+  - Custom parameter saving and loading
+  - Visual response graphs
+
+- **Enhanced Safety Features**
+  - One-tap emergency stop with confirmation
+  - Maximum altitude limit settings
+  - Flight mode selection (Normal/Sport/Beginner)
+  - Low battery auto-return capability
+  - Connection health monitoring
 
 ## Technology Stack
 
-- **Frontend**: React Native 0.79.2
-- **State Management**: React Hooks
-- **Navigation**: React Navigation
-- **Storage**: AsyncStorage
-- **Communication**: UDP for drone control
-- **Touch Handling**: React Native Gesture Handler
-- **UI Components**: Custom components with React Native Animated
-- **Feedback**: Vibration API for haptic response
+### Development Environment
+- **Operating System**: Windows 10 (also compatible with macOS, Linux)
+- **IDE**: Visual Studio Code
+- **Version Control**: Git/GitHub
+- **Node.js**: v18.19.0
+- **JDK**: v17.0.15 (Temurin)
+- **Android Studio**: Latest version
+- **Android SDK**: API Level 33
+- **Android Build Tools**: v35.0.0
+
+### Frontend Application
+- **React Native**: v0.79.2
+- **React Navigation**: Screen navigation and stack management
+- **AsyncStorage**: Local data persistence
+- **React Native Gesture Handler**: Advanced touch handling
+- **React Native SVG**: Vector graphics rendering
+- **React Native UDP**: For drone communication
+- **Vibration API**: For haptic feedback
+- **Custom Components**: Multiple specialized UI components
+
+### Hardware (Planned)
+- **Microcontroller**: ESP32 (ESP32-WROOM-32)
+- **Motors**: 4 × Brushless DC Motors (2204/2300KV)
+- **ESCs**: 4 × 30A Electronic Speed Controllers
+- **Frame**: 250mm carbon fiber/plastic frame
+- **Power**: 3S LiPo Battery (11.1V)
+- **Sensors**: MPU6050 (Gyroscope + Accelerometer)
 
 ## Prerequisites
 
 - Node.js (v18.19.0+)
 - JDK 17
-- Android Studio
-- Android SDK (API level 33 recommended)
+- Android Studio with Android SDK (API level 33 recommended)
 - A physical Android device or emulator
 - ESP32 hardware running compatible firmware (for full functionality)
 
@@ -61,8 +119,8 @@ A mobile application built with React Native to control an ESP32-based quadcopte
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/drone-controller-app.git
-cd drone-controller-app
+git clone https://github.com/yourusername/esp32-wifi-drone.git
+cd esp32-wifi-drone
 ```
 
 ### 2. Install Dependencies
@@ -112,29 +170,45 @@ To run the app on your physical device instead of an emulator:
 ## Application Usage
 
 ### Main Control Screen
-
-The control screen provides dual joystick controls:
-- **Left Joystick**: Controls throttle (vertical axis) and yaw (horizontal axis)
-- **Right Joystick**: Controls pitch (vertical axis) and roll (horizontal axis)
-- Both joysticks can be used simultaneously for complete control
-- Haptic feedback provides tactile response when using the joysticks
-- Status bar shows connection status and battery level
+- **Portrait Mode**: Provides access to all controls and navigation to other screens
+- **Landscape Mode**: Focused flight control interface with essential indicators
+- **Dual Joysticks**: Control throttle, yaw, pitch, and roll simultaneously
+- **Flight Mode Selector**: Switch between Normal, Sport, and Beginner modes
+- **Emergency Stop**: Immediately stop all motors in case of emergency
+- **Recording**: Start/stop flight data recording for later analysis
+- **Quick Access**: Fast navigation to telemetry, logs, and settings
 
 ### Connection Screen
-
-Manage your connection to the drone:
-- Set the IP address of your ESP32 drone
-- Configure the UDP port
+- Set the IP address and port of your ESP32 drone
 - Connect or disconnect from the drone
-- View live connection status
+- View real-time connection status
+- Visual indicators for connection health
+
+### Telemetry Screen
+- View comprehensive flight data in real-time
+- Monitor altitude, speed, battery level, and orientation
+- Track system temperatures and GPS status
+- Record telemetry data for later analysis
+
+### PID Tuning Screen
+- Adjust PID controller parameters (P, I, D gains)
+- See real-time response visualization in a dynamic graph
+- Use preset configurations for different flight characteristics
+- Save and load custom tuning profiles
+- Switch between normal and real-time tuning modes
+
+### Logs Screen
+- View history of all recorded flights
+- See flight statistics (duration, max altitude, etc.)
+- Select flights for detailed analysis
+- Interactive graphs for multiple flight parameters
+- Delete individual logs or clear history
 
 ### Settings Screen
-
-Customize your drone controller:
-- **Connection Settings**: Configure IP address and port
-- **Interface Settings**: Toggle haptic feedback for joysticks
-- **Advanced PID Settings**: Fine-tune flight control parameters
-- Save settings to persist between app launches
+- Configure connection parameters
+- Adjust interface preferences (haptic feedback toggle)
+- Set safety limits (maximum altitude, low battery alerts)
+- Configure automatic return-to-home options
 - Reset to default values if needed
 
 ## Project Structure
@@ -142,41 +216,51 @@ Customize your drone controller:
 ```
 drone-controller-app/
 ├── android/                # Android native code
-├── ios/                    # iOS native code
+├── ios/                    # iOS configuration (not primary focus)
 ├── src/                    # Source files
-│   ├── components/         # Reusable UI components
-│   │   ├── joystick/       # Joystick control components
+│   ├── components/         # UI components
+│   │   ├── joystick/       # Advanced joystick controls
 │   │   │   ├── GestureJoystick.js     # Multitouch-enabled joystick
 │   │   │   └── CustomJoystick.js      # Alternative implementation
 │   │   ├── status/         # Status indicators
-│   │   └── connection/     # Connection management UI
-│   ├── screens/            # App screens
-│   │   ├── ControlScreen.js      # Main control interface
-│   │   ├── SettingsScreen.js     # App settings
-│   │   └── ConnectionScreen.js   # Connection management
+│   │   └── connection/     # Connection components
+│   ├── screens/            # Application screens
+│   │   ├── EnhancedControlScreen.js   # Main control interface
+│   │   ├── EnhancedSettingsScreen.js  # Settings configuration
+│   │   ├── ConnectionScreen.js        # WiFi connection management
+│   │   ├── TelemetryScreen.js         # Telemetry visualization
+│   │   ├── LogsScreen.js              # Flight logs list
+│   │   ├── LogDetailScreen.js         # Detailed flight log view
+│   │   └── PIDTuningScreen.js         # PID parameter tuning
 │   ├── services/           # Business logic
-│   │   ├── DroneService.js      # Drone communication
-│   │   ├── MockDroneService.js  # Mock implementation for testing
-│   │   └── StorageService.js    # Local storage management
-│   └── utils/              # Utility functions
-├── App.js                  # App entry point
-└── index.js                # React Native entry point
+│   │   ├── DroneService.js            # Real drone communication
+│   │   ├── EnhancedMockDroneService.js # Mock implementation for testing
+│   │   └── EnhancedStorageService.js  # Local settings and log storage
+│   └── utils/              # Helper functions
+│       ├── enhancedHelpers.js         # Utility functions
+│       └── navigation.js              # Navigation utilities
+├── App.js                  # Main application component
+└── index.js                # Application entry point
 ```
 
-## ESP32 Hardware Integration
+## ESP32 Hardware Integration (Planned)
 
-This app is designed to work with an ESP32-based drone that:
-- Creates a WiFi access point or connects to a local network
-- Listens for UDP commands on a specified port
-- Interprets JSON commands with throttle, yaw, pitch, and roll values
-- Optionally sends telemetry data back to the app
+The application is designed to work with an ESP32-based drone that:
+1. Creates a WiFi access point or connects to a local network
+2. Listens for UDP commands on a specified port
+3. Interprets JSON commands with throttle, yaw, pitch, and roll values
+4. Sends telemetry data back to the app
+
+### Hardware Integration Steps (When Hardware is Ready)
+- Set up ESP32 with proper flight controller firmware
+- Configure WiFi access point on ESP32
+- Implement UDP server on ESP32 to receive commands
+- Update DroneService.js with real UDP communication
+- Test end-to-end communication
 
 ## Troubleshooting
 
-### App not displaying on physical device
-
-If the app installs but doesn't display:
-
+### App not displaying correctly
 1. Restart the Metro bundler with cache reset:
    ```bash
    npx react-native start --reset-cache
@@ -188,50 +272,40 @@ If the app installs but doesn't display:
    ```
 
 ### Joysticks not working simultaneously
-
-If you can't use both joysticks at once:
-
 1. Make sure the GestureJoystick component is being used
 2. Verify that your app is wrapped in GestureHandlerRootView
 3. Check that your device supports multi-touch
 
 ### Haptic feedback not working
-
-If haptic feedback is not working:
-
 1. Ensure the VIBRATE permission is in your AndroidManifest.xml
 2. Check that haptic feedback is enabled in the app settings
 3. Some devices may have limited or no haptic capabilities
 
+### PID Tuning Realtime Mode Error
+If you encounter errors when activating realtime mode in the PID Tuning screen:
+1. Make sure the drone is connected first
+2. The drone may need to be in "flight mode" - try setting a throttle value first
+3. If using the mock service, ensure it's properly initialized
+
 ### Connection issues
-
-If you're having trouble connecting to the drone:
-
 1. Verify your phone is connected to the same WiFi network as the ESP32
 2. Check that the IP address and port in settings are correct
 3. Ensure UDP communication isn't blocked by any firewall
+4. Try restarting both the app and the ESP32
 
 ## Future Plans
 
-- Implement telemetry data visualization
-- Add flight logging capabilities
-- Develop emergency stop functionality
-- Create autonomous flight modes
-- Implement gesture control via camera
+### Additional Software Features
+- Map integration for GPS visualization
+- Flight path planning capabilities
+- Automated flight modes (orbit, follow, waypoints)
+- Sensor calibration interface
+- Firmware update mechanism
 
-## Credits
+### AI Integration (Future Enhancement)
+- Computer vision for obstacle detection (requires camera)
+- Voice command recognition
+- Autonomous flight modes
+- Flight path optimization
+- Gesture controls via phone camera
 
-This project uses several open-source packages:
-- React Native
-- React Navigation
-- AsyncStorage
-- React Native Gesture Handler
-- React Native Safe Area Context
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
----
-
-*This project is part of a broader DIY drone development initiative aimed at making drone technology more accessible to hobbyists and students.*

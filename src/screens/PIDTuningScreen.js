@@ -227,9 +227,22 @@ const PIDTuningScreen = ({ navigation }) => {
     setRealtimeMode(!realtimeMode);
   };
   
-  // Start realtime updates
+  // Start realtime updates - UPDATED VERSION
   const startRealtimeUpdates = () => {
-    // Send initial values
+    // First, make sure the drone is actually "flying" in the mock service
+    // This hack ensures telemetry data will be generated properly
+    if (EnhancedMockDroneService.isConnected()) {
+      // Send a command to make the mock drone "fly" - with enough throttle to start flight
+      EnhancedMockDroneService.sendCommand({
+        throttle: 60,
+        yaw: 0,
+        pitch: 0,
+        roll: 0,
+        flightMode: 'Normal'
+      });
+    }
+    
+    // Send initial PID values
     EnhancedMockDroneService.sendPIDParameters(pGain, iGain, dGain);
     
     // Reset response graph
@@ -237,31 +250,36 @@ const PIDTuningScreen = ({ navigation }) => {
     
     // Start interval to fetch response data
     realtimeIntervalRef.current = setInterval(() => {
-      // In a real implementation, we would get response data from the drone
-      // For mock implementation, generate simulated response data
-      const telemetry = EnhancedMockDroneService.getTelemetry();
-      if (telemetry) {
-        // Simulate PID controller response
-        // In a real implementation, this would come from the drone
-        const setpoint = 0; // Target is level (0 degrees)
-        const current = telemetry.pitch; // Current value
-        const error = setpoint - current;
+      try {
+        // Get telemetry data with error handling
+        const telemetry = EnhancedMockDroneService.getTelemetry();
         
-        // Add point to response graph
-        setResponseGraph(prev => {
-          const newGraph = [...prev, {
-            time: Date.now(),
-            setpoint,
-            current,
-            error
-          }];
+        if (telemetry && typeof telemetry.pitch === 'number') {
+          // Simulate PID controller response
+          const setpoint = 0; // Target is level (0 degrees)
+          const current = telemetry.pitch; // Current value
+          const error = setpoint - current;
           
-          // Keep only the last 50 points to prevent performance issues
-          if (newGraph.length > 50) {
-            return newGraph.slice(newGraph.length - 50);
-          }
-          return newGraph;
-        });
+          // Add point to response graph
+          setResponseGraph(prev => {
+            const newGraph = [...prev, {
+              time: Date.now(),
+              setpoint,
+              current,
+              error
+            }];
+            
+            // Keep only the last 50 points
+            if (newGraph.length > 50) {
+              return newGraph.slice(newGraph.length - 50);
+            }
+            return newGraph;
+          });
+        } else {
+          console.log('No valid telemetry data available');
+        }
+      } catch (error) {
+        console.error('Error in realtime update:', error);
       }
     }, 200);
   };
@@ -274,7 +292,7 @@ const PIDTuningScreen = ({ navigation }) => {
     }
   };
   
-  // Generate visual representation of response - UPDATED WITH SVG COMPONENTS
+  // Generate visual representation of response - UPDATED VERSION
   const renderResponseGraph = () => {
     if (responseGraph.length === 0) {
       return (
@@ -302,7 +320,7 @@ const PIDTuningScreen = ({ navigation }) => {
     });
     
     // Add some padding
-    const valueRange = maxValue - minValue;
+    const valueRange = Math.max(0.1, maxValue - minValue); // Prevent division by zero
     minValue -= valueRange * 0.1;
     maxValue += valueRange * 0.1;
     
@@ -313,17 +331,34 @@ const PIDTuningScreen = ({ navigation }) => {
     
     // Calculate X positions based on the number of points
     const getX = (index) => {
+      // Handle the case with only one point to prevent division by zero
+      if (responseGraph.length <= 1) {
+        return graphWidth / 2 + graphPadding;
+      }
       return (index / (responseGraph.length - 1)) * graphWidth + graphPadding;
     };
     
     // Generate paths for setpoint and current value
-    const setpointPath = responseGraph.map((point, i) => 
-      `${i === 0 ? 'M' : 'L'} ${getX(i)} ${scaleY(point.setpoint)}`
-    ).join(' ');
+    // Only generate path if we have at least 2 points
+    let setpointPath = '';
+    let currentPath = '';
     
-    const currentPath = responseGraph.map((point, i) => 
-      `${i === 0 ? 'M' : 'L'} ${getX(i)} ${scaleY(point.current)}`
-    ).join(' ');
+    if (responseGraph.length >= 2) {
+      setpointPath = responseGraph.map((point, i) => 
+        `${i === 0 ? 'M' : 'L'} ${getX(i)} ${scaleY(point.setpoint)}`
+      ).join(' ');
+      
+      currentPath = responseGraph.map((point, i) => 
+        `${i === 0 ? 'M' : 'L'} ${getX(i)} ${scaleY(point.current)}`
+      ).join(' ');
+    } else if (responseGraph.length === 1) {
+      // For a single point, draw a small circle instead of a line
+      const x = getX(0);
+      const y1 = scaleY(responseGraph[0].setpoint);
+      const y2 = scaleY(responseGraph[0].current);
+      setpointPath = `M ${x-2} ${y1} A 2 2 0 1 0 ${x+2} ${y1}`;
+      currentPath = `M ${x-2} ${y2} A 2 2 0 1 0 ${x+2} ${y2}`;
+    }
     
     return (
       <View style={styles.graphContainer}>
@@ -344,7 +379,7 @@ const PIDTuningScreen = ({ navigation }) => {
             {minValue.toFixed(1)}
           </Text>
           
-          {/* Using React Native SVG components instead of raw SVG */}
+          {/* Using React Native SVG components */}
           <Svg width={width} height={height}>
             {/* Setpoint line */}
             <Path
