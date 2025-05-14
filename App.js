@@ -8,7 +8,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 // Import our enhanced screens
 import EnhancedControlScreen from './src/screens/EnhancedControlScreen';
-import EnhancedSettingsScreen from './src/screens/SettingsScreen';
+import EnhancedSettingsScreen from './src/screens/EnhancedSettingsScreen';
 import EnhancedConnectionScreen from './src/screens/ConnectionScreen';
 import TelemetryScreen from './src/screens/TelemetryScreen';
 import LogsScreen from './src/screens/LogsScreen';

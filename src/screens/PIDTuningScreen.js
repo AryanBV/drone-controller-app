@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   ScrollView,
   StatusBar,
-  Slider,
   Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,6 +14,77 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useFocusEffect } from '@react-navigation/native';
 import EnhancedStorageService from '../services/EnhancedStorageService';
 import EnhancedMockDroneService from '../services/EnhancedMockDroneService';
+
+// Custom SimpleSlider component to replace the react-native Slider
+const SimpleSlider = ({ value, minimumValue, maximumValue, step, onValueChange, minimumTrackTintColor, maximumTrackTintColor, thumbTintColor, style }) => {
+  const [sliderValue, setSliderValue] = useState(value);
+  
+  // Update internal value when prop changes
+  useEffect(() => {
+    setSliderValue(value);
+  }, [value]);
+  
+  const handleValueChange = (newValue) => {
+    const clampedValue = Math.min(maximumValue, Math.max(minimumValue, newValue));
+    const steppedValue = Math.round(clampedValue / step) * step;
+    setSliderValue(steppedValue);
+    if (onValueChange) {
+      onValueChange(steppedValue);
+    }
+  };
+  
+  const handleLayout = (event) => {
+    sliderWidth.current = event.nativeEvent.layout.width;
+  };
+  
+  const sliderWidth = useRef(0);
+  
+  const calculateValueFromPosition = (x) => {
+    if (sliderWidth.current === 0) return value;
+    const percentage = Math.max(0, Math.min(1, x / sliderWidth.current));
+    return minimumValue + (maximumValue - minimumValue) * percentage;
+  };
+  
+  const handlePress = (event) => {
+    const newValue = calculateValueFromPosition(event.nativeEvent.locationX);
+    handleValueChange(newValue);
+  };
+  
+  const thumbPosition = ((sliderValue - minimumValue) / (maximumValue - minimumValue)) * 100;
+  
+  return (
+    <View style={[customStyles.sliderContainer, style]}>
+      <TouchableOpacity 
+        style={[
+          customStyles.sliderTrack, 
+          { backgroundColor: maximumTrackTintColor || '#444444' }
+        ]}
+        activeOpacity={0.8}
+        onPress={handlePress}
+        onLayout={handleLayout}
+      >
+        <View 
+          style={[
+            customStyles.sliderFill, 
+            { 
+              width: `${thumbPosition}%`,
+              backgroundColor: minimumTrackTintColor || '#2196F3'
+            }
+          ]} 
+        />
+        <View 
+          style={[
+            customStyles.sliderThumb,
+            { 
+              left: `${thumbPosition}%`,
+              backgroundColor: thumbTintColor || '#2196F3'
+            }
+          ]} 
+        />
+      </TouchableOpacity>
+    </View>
+  );
+};
 
 const PIDTuningScreen = ({ navigation }) => {
   // PID parameters state
@@ -374,7 +444,7 @@ const PIDTuningScreen = ({ navigation }) => {
               <Text style={styles.paramValue}>{pGain.toFixed(2)}</Text>
             </View>
             
-            <Slider
+            <SimpleSlider
               style={styles.slider}
               minimumValue={0}
               maximumValue={5}
@@ -398,7 +468,7 @@ const PIDTuningScreen = ({ navigation }) => {
               <Text style={styles.paramValue}>{iGain.toFixed(2)}</Text>
             </View>
             
-            <Slider
+            <SimpleSlider
               style={styles.slider}
               minimumValue={0}
               maximumValue={1}
@@ -422,7 +492,7 @@ const PIDTuningScreen = ({ navigation }) => {
               <Text style={styles.paramValue}>{dGain.toFixed(2)}</Text>
             </View>
             
-            <Slider
+            <SimpleSlider
               style={styles.slider}
               minimumValue={0}
               maximumValue={2}
@@ -523,6 +593,39 @@ const PIDTuningScreen = ({ navigation }) => {
     </SafeAreaView>
   );
 };
+
+// Custom slider styles
+const customStyles = StyleSheet.create({
+  sliderContainer: {
+    width: '100%',
+    height: 40,
+    justifyContent: 'center',
+  },
+  sliderTrack: {
+    height: 4,
+    borderRadius: 2,
+    position: 'relative',
+  },
+  sliderFill: {
+    height: '100%',
+    borderRadius: 2,
+    position: 'absolute',
+    left: 0,
+  },
+  sliderThumb: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    position: 'absolute',
+    top: -8,
+    marginLeft: -10,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+  },
+});
 
 const styles = StyleSheet.create({
   safeArea: {
