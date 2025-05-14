@@ -12,7 +12,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import StorageService from '../services/StorageService';
+// Changed from StorageService to EnhancedStorageService
+import EnhancedStorageService from '../services/EnhancedStorageService';
 import { formatDate, formatTime } from '../utils/helpers';
 
 const LogChartItem = ({ title, data, min, max, color }) => {
@@ -120,7 +121,8 @@ const LogDetailScreen = ({ route, navigation }) => {
     const loadLogData = async () => {
       setLoading(true);
       try {
-        const logData = await StorageService.getFlightLogById(logId);
+        // Using EnhancedStorageService instead of StorageService
+        const logData = await EnhancedStorageService.getFlightLogById(logId);
         if (logData) {
           setLog(logData);
         } else {

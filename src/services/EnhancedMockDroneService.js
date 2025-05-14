@@ -1,7 +1,8 @@
 // src/services/EnhancedMockDroneService.js
 // Enhanced mock implementation that supports telemetry and logs
 
-import StorageService from './StorageService';
+// Change this import to use EnhancedStorageService
+import EnhancedStorageService from './EnhancedStorageService';
 
 let connected = false;
 let mockBatteryLevel = 100;
@@ -258,9 +259,9 @@ const EnhancedMockDroneService = {
         dataPoints: mockFlightData.recordedData.length
       };
       
-      // Save flight log
+      // Save flight log using EnhancedStorageService instead of StorageService
       try {
-        await StorageService.saveFlightLog(flightLog);
+        await EnhancedStorageService.saveFlightLog(flightLog);
         console.log('Mock flight log saved:', flightLog);
         
         // Clear recorded data to free memory
@@ -318,7 +319,7 @@ const EnhancedMockDroneService = {
       mockFlightData.pid = { p, i, d };
     } else {
       try {
-        const settings = await StorageService.getSettings();
+        const settings = await EnhancedStorageService.getSettings();
         if (settings) {
           mockFlightData.pid = {
             p: parseFloat(settings.pGain) || 1.0,

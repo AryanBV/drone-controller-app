@@ -14,6 +14,8 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useFocusEffect } from '@react-navigation/native';
 import EnhancedStorageService from '../services/EnhancedStorageService';
 import EnhancedMockDroneService from '../services/EnhancedMockDroneService';
+// Add import for react-native-svg
+import Svg, { Path, Line, Text as SvgText } from 'react-native-svg';
 
 // Custom SimpleSlider component to replace the react-native Slider
 const SimpleSlider = ({ value, minimumValue, maximumValue, step, onValueChange, minimumTrackTintColor, maximumTrackTintColor, thumbTintColor, style }) => {
@@ -272,7 +274,7 @@ const PIDTuningScreen = ({ navigation }) => {
     }
   };
   
-  // Generate visual representation of response
+  // Generate visual representation of response - UPDATED WITH SVG COMPONENTS
   const renderResponseGraph = () => {
     if (responseGraph.length === 0) {
       return (
@@ -342,10 +344,10 @@ const PIDTuningScreen = ({ navigation }) => {
             {minValue.toFixed(1)}
           </Text>
           
-          {/* SVG Paths */}
-          <svg width={width} height={height}>
+          {/* Using React Native SVG components instead of raw SVG */}
+          <Svg width={width} height={height}>
             {/* Setpoint line */}
-            <path
+            <Path
               d={setpointPath}
               stroke="#4CAF50"
               strokeWidth="2"
@@ -353,13 +355,13 @@ const PIDTuningScreen = ({ navigation }) => {
             />
             
             {/* Current value line */}
-            <path
+            <Path
               d={currentPath}
               stroke="#2196F3"
               strokeWidth="2"
               fill="none"
             />
-          </svg>
+          </Svg>
         </View>
         
         <View style={styles.graphLegend}>

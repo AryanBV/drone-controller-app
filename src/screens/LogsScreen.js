@@ -11,7 +11,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import StorageService from '../services/StorageService';
+// Changed from StorageService to EnhancedStorageService
+import EnhancedStorageService from '../services/EnhancedStorageService';
 import { formatDate, formatTime, formatDuration } from '../utils/helpers';
 
 const LogsScreen = ({ navigation }) => {
@@ -28,7 +29,8 @@ const LogsScreen = ({ navigation }) => {
   const loadLogs = async () => {
     setLoading(true);
     try {
-      const flightLogs = await StorageService.getFlightLogs();
+      // Using EnhancedStorageService instead of StorageService
+      const flightLogs = await EnhancedStorageService.getFlightLogs();
       setLogs(flightLogs || []);
     } catch (error) {
       console.error('Failed to load logs:', error);
@@ -50,7 +52,8 @@ const LogsScreen = ({ navigation }) => {
           style: 'destructive',
           onPress: async () => {
             try {
-              await StorageService.deleteFlightLog(logId);
+              // Using EnhancedStorageService instead of StorageService
+              await EnhancedStorageService.deleteFlightLog(logId);
               await loadLogs(); // Reload logs after deletion
               if (selectedLog && selectedLog.id === logId) {
                 setSelectedLog(null);
@@ -77,7 +80,8 @@ const LogsScreen = ({ navigation }) => {
           style: 'destructive',
           onPress: async () => {
             try {
-              await StorageService.clearFlightLogs();
+              // Using EnhancedStorageService instead of StorageService
+              await EnhancedStorageService.clearFlightLogs();
               setLogs([]);
               setSelectedLog(null);
             } catch (error) {

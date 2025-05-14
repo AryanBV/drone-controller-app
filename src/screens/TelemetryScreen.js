@@ -45,7 +45,7 @@ const AttitudeIndicator = ({ pitch, roll, isLandscape }) => {
   
   return (
     <View style={[styles.attitudeContainer, isLandscape && styles.attitudeContainerLandscape]}>
-      <Text style={[styles.attitudeTitle, isLandscape && styles.attitudeTitleLandscape]}>Attitude</Text>
+      <Text style={[styles.attitudeTitle, isLandscape && styles.attitudeTitleLandscape]}>Altitude</Text>
       <View style={[styles.attitudeBox, isLandscape && styles.attitudeBoxLandscape]}>
         <View 
           style={[
